@@ -1,6 +1,8 @@
 import apache_beam as beam
 import csv
 import argparse
+import time
+import datetime
 from apache_beam.options.pipeline_options import PipelineOptions
 import pyarrow as pa
 
@@ -30,6 +32,34 @@ def parse_csv_line(line):
         "Deaths": float(values[6]) if values[6] else None,
         "Recovered": float(values[7]) if values[7] else None
     }
+
+
+def create_file_path(source_system, dataset):
+    """
+    Create a file path prefix according to the specified format.
+    
+    Args:
+        source_system (str): The source system name
+        dataset (str): The dataset name
+        
+    Returns:
+        str: A file path prefix formatted as:
+            gs://totemic-bucket-raw/source_system/dataset/year=YYYY/month=MM/day=DD/source_system-dataset-YYYYMMDDHHMMSS.batch.EPOCHTIME
+    """
+    # Get the current time
+    now = datetime.datetime.now()
+    timestamp = now.strftime("%Y%m%d%H%M%S")
+    epoch_time = int(time.time())
+    
+    # Create the directory path with year, month, day
+    dir_path = f"gs://totemic-bucket-trusted/{source_system}/{dataset}/year={now.year}/month={now.month:02d}/day={now.day:02d}/"
+    
+    # Create the file name prefix
+    # TODO: parameterize file format and compression
+    file_name_prefix = f"{source_system}-{dataset}-{timestamp}.batch.{epoch_time}"
+    
+    # Combine the directory path and file name prefix
+    return f"{dir_path}{file_name_prefix}"
 
 
 def create_parquet_schema():
@@ -72,6 +102,16 @@ def parse_arguments():
         required=True,
         help='The path and filename prefix for writing the output. Example: gs://totemic-bucket-trusted/covid_19_data'
     )
+    parser.add_argument(
+        '--source_system',
+        default='covid19',
+        help='The source system name for file path generation'
+    )
+    parser.add_argument(
+        '--dataset',
+        default='daily_cases',
+        help='The dataset name for file path generation'
+    )
     
     known_args, pipeline_args = parser.parse_known_args()
     
@@ -101,11 +141,14 @@ def run(known_args, pipeline_options):
             | "Parse CSV Lines" >> beam.Map(parse_csv_line)
         )
         
+        output_path_prefix = create_file_path(known_args.source_system, known_args.dataset)
+        
         # Write the data to Parquet format
         csv_data | "Write to Parquet" >> beam.io.parquetio.WriteToParquet(
-            known_args.output_path,
-            create_parquet_schema(),
-            file_name_suffix=".parquet"
+            file_path_prefix=output_path_prefix,
+            schema=create_parquet_schema(),
+            file_name_suffix=".parquet",
+            codec="gzip" # parameterize compression into suffix
         )
 
 
