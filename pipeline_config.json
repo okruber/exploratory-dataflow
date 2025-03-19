@@ -1,0 +1,7 @@
+{
+    "input_path": "gs://totemic-bucket-raw/covid_19_data.csv",
+    "destination_bucket": "gs://totemic-bucket-trusted",
+    "source_system": "source_system_placeholder",
+    "dataset": "dataset_placeholder",
+    "pattern": "batch"
+  }

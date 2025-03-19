@@ -1,0 +1,24 @@
+python -m main \
+  --project=olle-kruber-project \
+  --runner=DirectRunner \
+  --temp_location=gs://totemic-dataflow-temp \
+  --pipeline_config=pipeline_config.json
+
+---
+
+gcloud builds submit --tag europe-north1-docker.pkg.dev/olle-kruber-project/dataflow-pipeline-images/exploratory-pipeline:latest . 
+
+---
+
+gcloud dataflow flex-template build gs://totemic-dataflow-templates/templates/latest/exploratory.json \
+  --image europe-north1-docker.pkg.dev/olle-kruber-project/dataflow-pipeline-images/exploratory-pipeline:latest \
+  --sdk-language PYTHON \
+  --metadata-file metadata.json
+
+---
+
+gcloud dataflow flex-template run "exploratory-`date +%Y%m%d-%H%M%S`" \
+  --template-file-gcs-location gs://totemic-dataflow-templates/templates/latest/exploratory.json \
+  --region europe-north1 \
+  --parameters input_path="gs://totemic-bucket-raw/covid_19_data.csv" \
+  --parameters destination_bucket="gs://totemic-bucket-trusted"

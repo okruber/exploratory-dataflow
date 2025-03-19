@@ -1,22 +1,14 @@
 {
-    "_comment": "This file allows you to optionally add additional metadata for the Flex Template, its parameters and their validation rules.",
+    "_comment": "This file allows you to optionally add additional metadata for the Flex Template.",
     "name": "test",
-    "description": "A Flex Template that finds the longest word in the input, and makes a FIGlet-style banner out of it.",
+    "description": "description from metadata file",
     "parameters": [
       {
-        "name": "input_path",
-        "label": "Input path",
-        "helpText": "The path and filename prefix for input files. Example: gs://dataflow-samples/shakespeare/kinglear.txt",
+        "name": "pipeline_config",
+        "label": "Pipeline Configuration",
+        "helpText": "The path to the JSON configuration file containing pipeline parameters. Can be a GCS path (gs://) or local file path. Example: gs://your-bucket/configs/pipeline_config.json",
         "regexes": [
-          "^gs:\\/\\/[^\\n\\r]+$"
-        ]
-      },
-      {
-        "name": "output_path",
-        "label": "Output destination",
-        "helpText": "The path and filename prefix for writing the output. Example: gs://your-bucket/longest-word",
-        "regexes": [
-          "^gs:\\/\\/[^\\n\\r]+$"
+          "^(gs:\\/\\/[^\\n\\r]+\\.json|[^\\n\\r]+\\.json)$"
         ]
       }
     ]
